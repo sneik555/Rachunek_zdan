@@ -1,5 +1,4 @@
-﻿#include "pch.h"
-#include <stdlib.h>
+﻿#include <stdlib.h>
 #include <iostream>
 #include <fstream>
 #include <typeinfo>
@@ -133,7 +132,7 @@ bool** utworz_tablice() //tworzy dynamiczna tablice o odpowiednym wymiarze, uzup
 	}
 	if (ilosc_dzialan == 0) { return NULL; }
 
-#if DBG 1
+#if DBG == 1
 	cout << ilosc_dzialan << endl;
 #endif
 
@@ -194,7 +193,7 @@ bool rachunek_logiczny(bool** &tabelaprawdy)
 		}
 	}
 
-#if DBG==1 
+#if DBG == 1 
 	podglad_tabeli_dbg(tabelaprawdy);
 #endif
 
@@ -410,7 +409,7 @@ int main()
 		return 0;
 	}
 
-#if DBG 1
+#if DBG == 1
 	cout << wejscie << endl;
 #endif
 
