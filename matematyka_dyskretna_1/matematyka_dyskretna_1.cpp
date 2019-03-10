@@ -3,36 +3,51 @@
 #include <fstream>
 #include <typeinfo>
 #include <string>
+#include <cctype>
+#include <cmath>
 
 #define DBG 0
 
 using namespace std;
 
 const string nazwa_pliku = "badanie_zdań_logicznych.txt";
-string wejscie;
-string tryb;
+std::string wejscie;
+int tryb;
 bool** tabelaprawdy;
-short wym_W, wym_K,przypadek = 10,rodz_litera,ilosc_P, ilosc_Q, ilosc_R;
+short wym_W, wym_K,przypadek = 10,rodz_litera,ilosc_P, ilosc_Q, ilosc_R, varsCount;
 bool tryb_zaawansowany = false;
 
+int calculateDimention()
+{
+	return static_cast<int>(pow(2.0, double(varsCount)));
+}
+
+int calculateCase()
+{
+	if (varsCount == 1)
+		return 0;
+	if (varsCount == 3)
+		return 10;
+	if (ilosc_P && ilosc_Q)
+		return 1;
+	if (ilosc_P && ilosc_R)
+		return 2;
+	if (ilosc_Q && ilosc_R)
+		return 3;
+}
 
 bool pobierz_dane_plik(void)
 {
-	fstream plik(nazwa_pliku, ios::in);
-	if (plik.good())
+	std::fstream plik(nazwa_pliku, ios::in);
+	if (!plik.good())
 	{
-		getline(plik, wejscie);
-		getline(plik, tryb);
-		if (!tryb.empty())
-		{
-			tryb = tryb[0];
-			if (stoi(tryb) == 1) { tryb_zaawansowany = true; }
-		}
-		plik.close();
-		return true;
+		return false;
 	}
-	plik.close();
-	return false;
+
+	getline(plik, wejscie);
+	plik >> tryb_zaawansowany;
+
+	return true;
 }
 
 void utworz_plik(void)
@@ -122,28 +137,49 @@ bool** utworz_tablice() //tworzy dynamiczna tablice o odpowiednym wymiarze, uzup
 	int aski;
 	short ilosc_dzialan = 0;
 
-	for (int i = (wejscie.length() - 1); i >= 0; i--)
+	for (auto character : wejscie)
 	{
-		aski = wejscie[i];
-		if (aski == 80 || aski == 112) { ilosc_P += 1; }
-		else if (aski == 81 || aski == 113) { ilosc_Q += 1; }
-		else if (aski == 82 || aski == 114) { ilosc_R += 1; }
-		else if (aski == 78 || aski == 110 || aski == 68 || aski == 100 || aski == 67 || aski == 99 || aski == 73 || aski == 105 || aski == 69 || aski == 101) { ilosc_dzialan += 1; }
+		switch (std::tolower(character))
+		{
+			case 'p':
+				if (!ilosc_P)
+				{
+					varsCount++;
+				}
+				ilosc_P++;
+				break;
+			case 'q':
+				if (!ilosc_Q)
+				{
+					varsCount++;
+				}
+				ilosc_Q++;
+				break;
+			case 'r':
+				if (!ilosc_R)
+				{
+					varsCount++;
+				}
+				ilosc_R++;
+				break;
+			case 'n': case 'd': case 'c': case 'i': case 'e':
+				ilosc_dzialan++;
+				break;
+		}
 	}
+
 	if (ilosc_dzialan == 0) { return NULL; }
 
 #if DBG == 1
 	cout << ilosc_dzialan << endl;
 #endif
 
-	if (ilosc_P != 0 && ilosc_Q == 0 && ilosc_R == 0 || ilosc_P == 0 && ilosc_Q != 0 && ilosc_R == 0 || ilosc_P == 0 && ilosc_Q == 0 && ilosc_R != 0) { wym_W = 2; przypadek = 0; }
-	else if (ilosc_P != 0 && ilosc_Q != 0 && ilosc_R == 0) { wym_W = 4; przypadek = 1; } // PQ
-	else if (ilosc_P != 0 && ilosc_Q == 0 && ilosc_R != 0) { wym_W = 4; przypadek = 2; } // PR
-	else if (ilosc_P == 0 && ilosc_Q != 0 && ilosc_R != 0) { wym_W = 4; przypadek = 3; } // QR
-	else { wym_W = 8; }
-	wym_K = ilosc_dzialan + !!ilosc_P + !!ilosc_Q + !!ilosc_R;
+	wym_W = calculateDimention();
+	przypadek = calculateCase();
 
-	if (wejscie[0] != 78 && wejscie[0] != 110) { wym_K += 1; } // N
+	wym_K = ilosc_dzialan + varsCount;
+
+	if (wejscie[0] != 'n' && wejscie[0] != 'N') { wym_K += 1; }
 
 	bool** tabelaprawdy;
 	tabelaprawdy = new bool*[wym_K];
@@ -161,6 +197,7 @@ bool** utworz_tablice() //tworzy dynamiczna tablice o odpowiednym wymiarze, uzup
 		tabelaprawdy[0][1] = 0; tabelaprawdy[1][1] = 1; tabelaprawdy[2][1] = 0; tabelaprawdy[3][1] = 1; tabelaprawdy[4][1] = 0; tabelaprawdy[5][1] = 1; tabelaprawdy[6][1] = 0; tabelaprawdy[7][1] = 1;
 		tabelaprawdy[0][2] = 0; tabelaprawdy[1][2] = 0; tabelaprawdy[2][2] = 0; tabelaprawdy[3][2] = 0; tabelaprawdy[4][2] = 1; tabelaprawdy[5][2] = 1; tabelaprawdy[6][2] = 1; tabelaprawdy[7][2] = 1;
 	}
+
 	return tabelaprawdy;
 }
 
@@ -193,7 +230,7 @@ bool rachunek_logiczny(bool** &tabelaprawdy)
 		}
 	}
 
-#if DBG == 1 
+#if DBG==1 
 	podglad_tabeli_dbg(tabelaprawdy);
 #endif
 
